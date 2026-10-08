@@ -1,0 +1,37 @@
+name: NAA macOS POC framework
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - sameerag/naa-macos-poc
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build and test macOS framework
+        run: ./build.py --targets macFramework --no-clean --no-xcpretty
+
+      - name: Package XCFramework
+        shell: bash
+        run: |
+          set -euo pipefail
+          framework="$(find build -type d -path '*/Debug/MSAL.framework' -print -quit)"
+          if [[ -z "$framework" ]]; then
+            echo "MSAL.framework was not produced under build/."
+            exit 1
+          fi
+          xcodebuild -create-xcframework \
+            -framework "$framework" \
+            -output build/MSAL.xcframework
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MSAL-macOS-xcframework
+          path: build/MSAL.xcframework
+          if-no-files-found: error

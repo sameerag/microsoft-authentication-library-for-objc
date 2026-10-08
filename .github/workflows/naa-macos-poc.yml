@@ -14,15 +14,24 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Build and test macOS framework
-        run: ./build.py --targets macFramework --no-clean --no-xcpretty
+      - name: Build macOS framework
+        run: |
+          xcodebuild build \
+            -workspace MSAL.xcworkspace \
+            -scheme "MSAL (Mac Framework)" \
+            -configuration Debug \
+            -destination "platform=macOS" \
+            -derivedDataPath build/DerivedData \
+            -jobs 2 \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            RUN_CLANG_STATIC_ANALYZER=NO
 
       - name: Package XCFramework
         shell: bash
         run: |
           set -euo pipefail
-          framework="$(find build -type d -path '*/Debug/MSAL.framework' -print -quit)"
-          if [[ -z "$framework" ]]; then
+          framework="build/DerivedData/Build/Products/Debug/MSAL.framework"
+          if [[ ! -d "$framework" ]]; then
             echo "MSAL.framework was not produced under build/."
             exit 1
           fi
@@ -35,3 +44,13 @@ jobs:
           name: MSAL-macOS-xcframework
           path: build/MSAL.xcframework
           if-no-files-found: error
+
+  test:
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Run macOS unit tests
+        run: ./build.py --targets macFramework --no-clean --no-xcpretty

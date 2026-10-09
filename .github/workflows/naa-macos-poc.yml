@@ -24,6 +24,7 @@ jobs:
             -derivedDataPath build/DerivedData \
             -jobs 2 \
             COMPILER_INDEX_STORE_ENABLE=NO \
+            BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
             RUN_CLANG_STATIC_ANALYZER=NO
 
       - name: Package XCFramework
